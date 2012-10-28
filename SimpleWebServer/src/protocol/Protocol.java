@@ -55,8 +55,7 @@ public class Protocol {
     
     public static final int NOT_MODIFIED_CODE = 304;
     public static final String NOT_MODIFIED_TEXT = "Not Modified";
-    
-    
+       
     public static final int NOT_SUPPORTED_CODE = 501;
     public static final String NOT_SUPPORTED_TEXT = "HTTP Version Not Supported";
 
@@ -64,6 +63,7 @@ public class Protocol {
     public static final String HOST = "Host";
     public static final String CONNECTION = "Connection";
     public static final String USER_AGENT = "User-Agent";
+    public static final String REQUEST_MODIFIED = "if-modified-since";
 
     // Some useful header elements in response
     public static final String DATE = "Date";

@@ -10,6 +10,8 @@ import java.util.TimeZone;
 
 public class GMTConversion {
 	public static final String GMT_FORMAT = "EEE, d MMM yyyy HH:mm:ss z";
+	//chrome  format looks like this...If-Modified-Since: Sun Oct 28 18:09:39 EDT 2012
+	public static final String FORMAT_MODIFIED = "EEE MMM d HH:mm:ss z yyyy";
 	
 	public static String toGMTString(Date date) {
 		Calendar calendar = new GregorianCalendar();
@@ -26,6 +28,16 @@ public class GMTConversion {
 		calendar.setTimeZone(TimeZone.getTimeZone("GMT"));
 
 		DateFormat gmtFormat = new SimpleDateFormat(GMT_FORMAT);
+		gmtFormat.setCalendar(calendar);
+	
+		return gmtFormat.parse(dateString);
+	}
+	
+	public static Date getModifiedDateFromString(String dateString) throws ParseException {
+		Calendar calendar = new GregorianCalendar();
+		calendar.setTimeZone(TimeZone.getTimeZone("GMT"));
+
+		DateFormat gmtFormat = new SimpleDateFormat(FORMAT_MODIFIED);
 		gmtFormat.setCalendar(calendar);
 	
 		return gmtFormat.parse(dateString);

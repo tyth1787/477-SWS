@@ -25,7 +25,8 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import protocol.HttpRequest;
 import protocol.HttpResponse;
@@ -169,8 +170,22 @@ public class ConnectionHandler implements Runnable {
 						}
 					}
 					else { // Its a file
-						// Lets create 200 OK response
+					//	System.out.println(request.toString());
+						if (request.hasModifiedDate()) {
+							response = HttpResponseFactory.create304NotModified(Protocol.CLOSE);
+							Date modifiedDate = request.getModifiedDate();
+							long fileModifiedDate = file.lastModified();
+							long requestTime = modifiedDate.getTime();
+							if (requestTime < fileModifiedDate){
+								response = HttpResponseFactory.create304NotModified(Protocol.CLOSE);
+							} else {
+								//file has changed since then so resend it
+								response = HttpResponseFactory.create200OK(file, Protocol.CLOSE);
+							}
+
+						} else {
 						response = HttpResponseFactory.create200OK(file, Protocol.CLOSE);
+						}
 					}
 				}
 				else {

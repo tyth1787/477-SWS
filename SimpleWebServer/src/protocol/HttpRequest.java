@@ -23,12 +23,18 @@
 package protocol;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.text.ParseException;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
+
+import server.GMTConversion;
 
 /**
  * Represents a request object for HTTP.
@@ -67,7 +73,7 @@ public class HttpRequest {
 	 * The version of the http request.
 	 * @return the version
 	 */
-	public String getVersion() {
+	public String getVersion() {	
 		return version;
 	}
 
@@ -82,7 +88,19 @@ public class HttpRequest {
 	}
 	
 	public boolean hasModifiedDate() {
-		return false;
+		return header.containsKey(Protocol.REQUEST_MODIFIED);
+	}
+	
+	public Date getModifiedDate() {
+		Calendar cal = Calendar.getInstance();
+		Date modifiedDate = cal.getTime();
+		try {
+			modifiedDate= GMTConversion.getModifiedDateFromString(header.get(Protocol.REQUEST_MODIFIED));
+		} catch (ParseException e) {
+			//parse error
+			e.printStackTrace();
+		}
+		return modifiedDate;
 	}
 
 	/**
