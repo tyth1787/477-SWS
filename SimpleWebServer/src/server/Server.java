@@ -34,11 +34,15 @@ import java.net.Socket;
  * @author Chandan R. Rupakheti (rupakhet@rose-hulman.edu)
  */
 public class Server implements Runnable {
+	private static final int MAX_QUEUE_LENGTH = 1000;
+	private static final int MIN_THREADS = 5;
+	private static final int MAX_THREADS = 25;
 	private String rootDirectory;
 	private int port;
 	private boolean stop;
 	private ServerSocket welcomeSocket;
-	
+    protected HTTPRequestQueue requestQueue;
+
 	private long connections;
 	private long serviceTime;
 	
@@ -54,6 +58,8 @@ public class Server implements Runnable {
 		this.connections = 0;
 		this.serviceTime = 0;
 		this.window = window;
+		this.requestQueue = new HTTPRequestQueue(MAX_QUEUE_LENGTH,MIN_THREADS,MAX_THREADS, this);
+
 	}
 
 	/**
@@ -129,8 +135,10 @@ public class Server implements Runnable {
 					break;
 				
 				// Create a handler for this incoming connection and start the handler in a new thread
-				ConnectionHandler handler = new ConnectionHandler(this, connectionSocket);
-				new Thread(handler).start();
+//				ConnectionHandler handler = new ConnectionHandler(this, connectionSocket);
+//				new Thread(handler).start();
+                this.requestQueue.add( connectionSocket );
+
 			}
 			this.welcomeSocket.close();
 		}
