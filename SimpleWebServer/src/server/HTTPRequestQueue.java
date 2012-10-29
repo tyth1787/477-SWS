@@ -42,104 +42,72 @@ public class HTTPRequestQueue
   */
  private LinkedList<Socket> queue = new LinkedList<Socket>();
 
- /**
-  * The maximum length that the queue can grow to
-  */
- private int maxQueueLength;
 
- /**
-  * The minimum number of threads in this queue's associated thread pool
-  */
- private int minThreads;
-
- /**
-  * The maximum number of threads that can be in this queue's associated thread pool
-  */
- private int maxThreads;
-
- /**
-  * The current number of threads
-  */
+ private int maxThreadsAllowedInQueue;
+ private int minThreadsRunning;
+ private int maxThreadsRunning;
  private int currentThreads = 0;
-
-
- /**
-  * The thread pool that is servicing this request
-  */
- private List<HTTPRequestThread> threadPool = new ArrayList<HTTPRequestThread>();
-
- private boolean running = true;
- 
+ private List<HTTPRequestThread> threads = new ArrayList<HTTPRequestThread>();
+ private boolean isServerRunning = true;
  private Server server;
 
  /**
   * Creates a new RequestQueue
   */
- public HTTPRequestQueue(int maxQueueLength,
-                      int minThreads,
-                      int maxThreads,
-                      Server server)
+ public HTTPRequestQueue(int maxQueueLength,int minThreads,int maxThreads,Server server)
  {
-     // Initialize our parameters
-     this.maxQueueLength = maxQueueLength;
-     this.minThreads = minThreads;
-     this.maxThreads = maxThreads;
-     this.currentThreads = this.minThreads;
+     // Initialize member variables
+     this.maxThreadsAllowedInQueue = maxQueueLength;
+     this.minThreadsRunning = minThreads;
+     this.maxThreadsRunning = maxThreads;
+     this.currentThreads = this.minThreadsRunning;
      this.server = server;
-
-     // Create the minimum number of threads
-     for( int i=0; i<this.minThreads; i++ )
+     // Create the minimum number of threads that are to be running
+     for( int i=0; i<this.minThreadsRunning; i++ )
      {
          HTTPRequestThread thread = new HTTPRequestThread( this, i, this.server );
          thread.start();
-         this.threadPool.add( thread );
+         this.threads.add( thread );
      }
  }
 
  /**
-  * Adds a new object to the end of the queue
+  * Adds a new socket to the end of the queue
   * 
-  * @param o     Adds the specified object to the Request Queue
+  * @param socket Adds the specified object to the HTTPRequestQueue
  * @throws Exception 
   */
- public synchronized void add( Socket o ) throws Exception
+ public synchronized void add( Socket socket ) throws Exception
  {
      // Validate that we have room of the object before we add it to the queue
-     if( queue.size() > this.maxQueueLength )
+     if( queue.size() > this.maxThreadsAllowedInQueue )
      {
-         throw new Exception( "The Request Queue is full. Max size = " + this.maxQueueLength );
+         throw new Exception( "You have exceeded the maximum number of threads allowed");
      }
 
      // Add the new object to the end of the queue
-     queue.addLast( o );
+     queue.addLast( socket );
 
      // See if we have an available thread to process the request
      boolean availableThread = false;
-     for( Iterator i=this.threadPool.iterator(); i.hasNext(); )
+     for( Iterator<HTTPRequestThread> i=this.threads.iterator(); i.hasNext(); )
      {
-         HTTPRequestThread rt = ( HTTPRequestThread )i.next();
-         if( !rt.isProcessing() )
+         HTTPRequestThread requestThread = i.next();
+         if( !requestThread.isProcessing() )
          {
-             System.out.println( "Found an available thread" );
              availableThread = true;
              break;
          }
-         System.out.println( "Thread is busy" );
      }
 
      // See if we have an available thread
      if( !availableThread )
      {
-         if( this.currentThreads < this.maxThreads )
+         if( this.currentThreads < this.maxThreadsRunning )
          {
-             System.out.println( "Creating a new thread to satisfy the incoming request" );
              HTTPRequestThread thread = new HTTPRequestThread( this, currentThreads++, this.server );
              thread.start();
-             this.threadPool.add( thread );
-         }
-         else
-         {
-             System.out.println( "Whoops, can't grow the thread pool, guess you have to wait" );
+             this.threads.add( thread );
          }
      }
 
@@ -157,7 +125,7 @@ public class HTTPRequestQueue
      {
          try
          {
-             if( !running )
+             if( !isServerRunning )
              {
                  // Exit criteria for stopping threads
                  return null;
@@ -176,13 +144,11 @@ public class HTTPRequestQueue
   */
  public synchronized void shutdown()
  {
-     System.out.println( "Shutting down request threads..." );
-
      // Mark the queue as not running so that we will free up our request threads
-     this.running = false;
+     this.isServerRunning = false;
 
      // Tell each thread to kill itself
-     for( Iterator i=this.threadPool.iterator(); i.hasNext(); )
+     for( Iterator i=this.threads.iterator(); i.hasNext(); )
      {
          HTTPRequestThread rt = ( HTTPRequestThread )i.next();
          rt.killThread();

@@ -35,34 +35,12 @@ import java.net.*;
  */
 public class HTTPRequestThread extends Thread
 {
-    /**
-     * A reference to our request queue
-     */
+
     private HTTPRequestQueue queue;
-
-    /**
-     * Our state: are we running or not?
-     */
     private boolean running;
-
-    /**
-     * Our processing state: are we currently processing a request?
-     */
     private boolean processing = false;
-
-    /**
-     * Our thread number, used for accounting purposes
-     */
     private int threadNumber;
-
-    /**
-     * Our connection handler
-     */ 
     private ConnectionHandler connectionHandler;
-    
-    /**
-     * Our server
-     */ 
     private Server server;
 
     /**
@@ -91,7 +69,6 @@ public class HTTPRequestThread extends Thread
      */
     public void killThread()
     {
-        System.out.println( "[" + threadNumber + "]: Attempting to kill thread..." );
         this.running = false;
     }
 
@@ -111,20 +88,14 @@ public class HTTPRequestThread extends Thread
                 Object o = queue.getNextObject();
                 if( running )
                 {
-                    // Cast the object to a Socket
                     Socket socket = ( Socket )o;
 
                     this.connectionHandler = new ConnectionHandler(server, socket);
-                    // Mark ourselves as processing a request
                     this.processing = true;
-                    System.out.println( "[" + threadNumber + "]: Processing request..." );
 
-                    // Handle the request
                     this.connectionHandler.run();
 
-                    // We've finished processing, so make ourselves available for the next request
                     this.processing = false;
-                    System.out.println( "[" + threadNumber + "]: Finished Processing request..." );
                 }
             }
             catch( Exception e )
@@ -132,7 +103,5 @@ public class HTTPRequestThread extends Thread
                 e.printStackTrace();
             }
         }
-
-        System.out.println( "[" + threadNumber + "]: Thread shutting down..." );
     }
 }
